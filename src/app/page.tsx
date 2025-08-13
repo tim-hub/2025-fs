@@ -10,12 +10,12 @@ import { Money } from '@/components/custom/money';
 import { debounce } from '@/lib/utils';
 import { getDiscountRate } from '@/lib/getDiscountRate';
 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select'
+import { getRegionTax, REGIONS } from '@/lib/getRegionTax';
+
 
 export default function Home() {
-
   const [date, setDate] = useState(new Date());
-
-
   useEffect(() => {
     // Update the date every second
     const interval = setInterval(() => {
@@ -28,6 +28,7 @@ export default function Home() {
 
   const [quantity, setQuantity] = useState(0);
   const [price, setPrice] = useState(0);
+  const [region, setRegion] = useState<string | null>(null);
 
 
   const debouncedQuantityChange = useCallback(
@@ -55,10 +56,15 @@ export default function Home() {
     debouncedPriceChange(e.target.value);
   }
 
+  const handleRegionChange = (value: string) => {
+    setRegion(value);
+  }
+
   const totalBeforeDiscount = quantity * price;
   const discountRate = getDiscountRate(totalBeforeDiscount);
   const totalBeforeTax = totalBeforeDiscount * (1 - discountRate);
 
+  const regionTax = region ? getRegionTax(region) : null;
 
   return (
     <div
@@ -72,6 +78,23 @@ export default function Home() {
           <div className="flex flex-col gap-2">
             <Label htmlFor="price">Price</Label>
             <Input id={'price'} type={'number'} required onChange={handlePriceChange}/>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="region">Region</Label>
+            <Select onValueChange={(value) => handleRegionChange(value)}>
+              <SelectTrigger id="region" className="w-full">
+                <SelectValue placeholder="Select region"/>
+              </SelectTrigger>
+              <SelectContent>
+                {
+                  REGIONS.map((region) => (
+                    <SelectItem key={region} value={region}>
+                      {region}
+                    </SelectItem>
+                  ))
+                }
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <div className="flex flex-col gap-4">
@@ -105,23 +128,46 @@ export default function Home() {
                           </div>
                           <div className="tabular-nums ">× {quantity}</div>
                         </div>
-
                       </div>
                     </div>
 
                     <Separator className="my-3"/>
                     {/* Totals */}
                     <div className="text-sm space-y-1">
-                      <div className="flex items-center justify-between"><span
-                        className="text-muted-foreground">Subtotal</span><span className="font-medium"><Money
-                        value={totalBeforeDiscount}/></span></div>
-                      <div className="flex items-center justify-between"><span
-                        className="text-muted-foreground">Discount Rate ({(discountRate * 100).toFixed(0)}%)</span><span
-                        className="font-medium"><Money value={totalBeforeDiscount * discountRate}/></span></div>
-                      <div className="flex items-center justify-between pt-1 text-base"><span
-                        className="font-semibold">Total</span><span className="font-semibold"><Money
-                        value={totalBeforeTax}/></span>
+                      <div className="flex items-center justify-between">
+                        <span
+                          className="text-muted-foreground">Subtotal</span>
+                        <span className="font-medium">
+                          <Money value={totalBeforeDiscount}/>
+                        </span>
                       </div>
+                      <div className="flex items-center justify-between">
+                        <span
+                          className="text-muted-foreground">Discount Rate ({(discountRate * 100).toFixed(0)}%)
+                        </span>
+                        <span className="font-medium">
+                          (<Money value={totalBeforeDiscount * discountRate}/>)
+                        </span>
+                      </div>
+                      {regionTax && (
+                        <>
+                          <div className="flex items-center justify-between">
+                            <span
+                              className="text-muted-foreground">Tax ({(regionTax * 100).toFixed(0)}%)
+                            </span>
+                            <span className="font-medium">
+                              (<Money value={totalBeforeTax * regionTax}/>)
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between pt-1 text-base">
+                            <span className="font-semibold">Total</span>
+                            <span className="font-semibold">
+                            <Money value={totalBeforeTax * (1 - regionTax)}/>
+                          </span>
+                          </div>
+                        </>
+                      )}
+
                     </div>
 
                     {/* Thank you */}
