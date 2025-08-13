@@ -5,13 +5,14 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, ReceiptText } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { useCallback, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { Money } from '@/components/custom/money';
 import { debounce } from '@/lib/utils';
 import { getDiscountRate } from '@/lib/getDiscountRate';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select'
 import { getRegionTax, REGIONS } from '@/lib/getRegionTax';
+import { BigNumber } from 'bignumber.js';
 
 
 export default function Home() {
@@ -26,33 +27,33 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  const [quantity, setQuantity] = useState(0);
-  const [price, setPrice] = useState(0);
+  const [quantity, setQuantity] = useState<BigNumber>(new BigNumber(0));
+  const [price, setPrice] = useState<BigNumber>(new BigNumber(0));
   const [region, setRegion] = useState<string | null>(null);
 
 
   const debouncedQuantityChange = useCallback(
     debounce((value: string) => {
       const parsedValue = parseInt(value, 10);
-      setQuantity(isNaN(parsedValue) ? 0 : parsedValue);
+      setQuantity(new BigNumber(isNaN(parsedValue) ? 0 : parsedValue));
     }, 100),
     []
   );
 
-  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleQuantityChange = (e: ChangeEvent<HTMLInputElement>) => {
     debouncedQuantityChange(e.target.value);
   };
 
   const debouncedPriceChange = useCallback(
     debounce((value: string) => {
       const parsedValue = parseFloat(value);
-      setPrice(isNaN(parsedValue) ? 0 : parsedValue);
+      setPrice(new BigNumber(isNaN(parsedValue) ? 0 : parsedValue));
     }, 100),
     []
   );
 
 
-  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePriceChange = (e: ChangeEvent<HTMLInputElement>) => {
     debouncedPriceChange(e.target.value);
   }
 
@@ -60,9 +61,9 @@ export default function Home() {
     setRegion(value);
   }
 
-  const totalBeforeDiscount = quantity * price;
-  const discountRate = getDiscountRate(totalBeforeDiscount);
-  const totalBeforeTax = totalBeforeDiscount * (1 - discountRate);
+  const totalBeforeDiscount = quantity.times(price);
+  const discountRate = getDiscountRate(totalBeforeDiscount.toNumber());
+  const totalBeforeTax = totalBeforeDiscount.times(1 - discountRate);
 
   const regionTax = region ? getRegionTax(region) : null;
 
@@ -116,7 +117,7 @@ export default function Home() {
 
             <CardContent className="pt-2">
               {
-                price > 0 && quantity > 0 && (
+                price.isGreaterThan( 0) && quantity.isGreaterThan(0) && (
                   <>
                     <Separator className="my-3"/>
                     <div className="space-y-2">
@@ -126,7 +127,7 @@ export default function Home() {
                           <div className="font-medium ">
                             <Money value={price}/>
                           </div>
-                          <div className="tabular-nums ">× {quantity}</div>
+                          <div className="tabular-nums ">× {quantity.toFixed(0)}</div>
                         </div>
                       </div>
                     </div>
@@ -146,7 +147,7 @@ export default function Home() {
                           className="text-muted-foreground">Discount Rate ({(discountRate * 100).toFixed(0)}%)
                         </span>
                         <span className="font-medium">
-                          (<Money value={totalBeforeDiscount * discountRate}/>)
+                          (<Money value={totalBeforeDiscount.times(discountRate)}/>)
                         </span>
                       </div>
                       {regionTax && (
@@ -156,13 +157,13 @@ export default function Home() {
                               className="text-muted-foreground">Tax ({(regionTax * 100).toFixed(0)}%)
                             </span>
                             <span className="font-medium">
-                              (<Money value={totalBeforeTax * regionTax}/>)
+                              (<Money value={totalBeforeTax.times(regionTax)}/>)
                             </span>
                           </div>
                           <div className="flex items-center justify-between pt-1 text-base">
                             <span className="font-semibold">Total</span>
                             <span className="font-semibold">
-                            <Money value={totalBeforeTax * (1 - regionTax)}/>
+                            <Money value={totalBeforeTax.times(1 - regionTax)}/>
                           </span>
                           </div>
                         </>
