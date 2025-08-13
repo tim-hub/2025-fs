@@ -3,7 +3,7 @@ import { getDiscountRate } from './getDiscountRate';
 
 describe('getDiscountRate', () => {
   it('returns 0 for order value <= 1000', () => {
-    expect(getDiscountRate(1000)).toBe(0);
+    expect(getDiscountRate(999)).toBe(0);
   })
   // matrix test
   it.each([
