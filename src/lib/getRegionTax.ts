@@ -1,7 +1,7 @@
 const RegionTaxMap: Map<string, number> = new Map([
   ['AUK', 0.0685],
   ['WLG', 0.08],
-  ['WAK', 0.0625],
+  ['WAI', 0.0625],
   ['CHC', 0.04],
   ['TAS', 0.0825]
 ])
