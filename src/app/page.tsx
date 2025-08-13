@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { useCallback, useEffect, useState } from 'react';
 import { Money } from '@/components/custom/money';
 import { debounce } from '@/lib/utils';
+import { getDiscountRate } from '@/lib/getDiscountRate';
 
 
 export default function Home() {
@@ -53,6 +54,11 @@ export default function Home() {
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     debouncedPriceChange(e.target.value);
   }
+
+  const totalBeforeDiscount = quantity * price;
+  const discountRate = getDiscountRate(totalBeforeDiscount);
+  const totalBeforeTax = totalBeforeDiscount * (1 - discountRate);
+
 
   return (
     <div
@@ -103,13 +109,13 @@ export default function Home() {
                     <div className="text-sm space-y-1">
                       <div className="flex items-center justify-between"><span
                         className="text-muted-foreground">Subtotal</span><span className="font-medium"><Money
-                        value={quantity * price}/></span></div>
+                        value={totalBeforeDiscount}/></span></div>
                       <div className="flex items-center justify-between"><span
-                        className="text-muted-foreground">Tax ({(0.1 * 100).toFixed(0)}%)</span><span
-                        className="font-medium"><Money value={0.1}/></span></div>
+                        className="text-muted-foreground">Discount Rate ({(discountRate * 100).toFixed(0)}%)</span><span
+                        className="font-medium"><Money value={totalBeforeDiscount * discountRate}/></span></div>
                       <div className="flex items-center justify-between pt-1 text-base"><span
                         className="font-semibold">Total</span><span className="font-semibold"><Money
-                        value={0.1}/></span>
+                        value={totalBeforeTax}/></span>
                       </div>
                     </div>
 
